@@ -1,33 +1,25 @@
 import com.codeborne.pdftest.PDF;
+import com.codeborne.pdftest.matchers.ContainsExactText;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.xlstest.XLS;
 import com.opencsv.CSVReader;
+import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
-
-import javax.swing.text.html.parser.Parser;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Scanner;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static com.codeborne.selenide.Selenide.$;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ZipFiles {
     static {
         Configuration.browser = "Chrome";
     }
 
-    ClassLoader cl = getClass().getClassLoader();
+    ClassLoader cl = ZipFiles.class.getClassLoader();
     String zipway = "src/test/resources/zip/simple-zip-file.zip";
-    String namezip = "src/test/resources/zip/simple-zip-file.zip";
-    String pdfName = "junit-user-guide-5.8.2.pdf";
-    String xlsxName = "sample-xlsx-file.xlsx";
-    String csvName = "teachers.csv";
+    String namezip = "zip/simple-zip-file.zip";
+
 
     @Test
     void zipParsingTest() throws Exception {
@@ -52,4 +44,44 @@ public class ZipFiles {
         }
     }
 
+    @Test
+    void zipCheckFile() throws Exception {
+        try (InputStream is = cl.getResourceAsStream(namezip);
+             ZipInputStream zip = new ZipInputStream(is)) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.getName().equals("junit-user-guide-5.8.2.pdf")) {
+
+                    PDF pdf = new PDF(zip);
+                    MatcherAssert.assertThat(pdf, new ContainsExactText("JUnit 5 User Guide"));
+                    System.out.printf("Проверка PDF успешно");
+                    System.out.println();
+                } else if (entry.getName().equals("teachers.csv")) {
+                    CSVReader reader = new CSVReader(new InputStreamReader(zip));
+                    List<String[]> content = reader.readAll();
+                    org.assertj.core.api.Assertions.assertThat(content).contains(
+                            new String[]{"Name", "Surname"},
+                            new String[]{"Anna", "Rain"},
+                            new String[]{"Masha", "Makarova"}
+                    );
+                    System.out.printf("Проверка CSV успешно");
+                    System.out.println();
+
+                } else if (entry.getName().equals("sample-xlsx-file.xls")) {
+
+                    XLS xls = new XLS(zip);
+                    assertThat(xls.excel
+                            .getSheetAt(0)
+                            .getRow(3)
+                            .getCell(1)
+                            .getStringCellValue()).contains("Carla");
+                }
+                System.out.printf("Проверка XLS успешно");
+                System.out.println();
+            }
+        }
+    }
 }
+
+
+
