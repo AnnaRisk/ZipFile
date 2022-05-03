@@ -16,38 +16,30 @@ public class ZipFiles {
         Configuration.browser = "Chrome";
     }
 
-    ClassLoader cl = ZipFiles.class.getClassLoader();
     String zipway = "src/test/resources/zip/simple-zip-file.zip";
     String namezip = "zip/simple-zip-file.zip";
-
 
     @Test
     void zipParsingTest() throws Exception {
 
-        try (
-                ZipInputStream zin = new ZipInputStream(new FileInputStream(zipway))) {
-
+        try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipway))) {
             ZipEntry entry;
             String name;
             long size;
-
             while ((entry = zin.getNextEntry()) != null) {
                 name = entry.getName(); // получим название файла
                 size = entry.getSize();  // получим его размер в байтах
                 System.out.printf("File name: %s \t File size: %d \n", name, size);
-
             }
         } catch (
                 Exception ex) {
-
             System.out.println(ex.getMessage());
         }
     }
 
     @Test
     void zipCheckFile() throws Exception {
-        try (InputStream is = cl.getResourceAsStream(namezip);
-             ZipInputStream zip = new ZipInputStream(is)) {
+        try (ZipInputStream zip = new ZipInputStream(new FileInputStream(zipway))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 if (entry.getName().equals("junit-user-guide-5.8.2.pdf")) {
@@ -74,7 +66,7 @@ public class ZipFiles {
                             .getSheetAt(0)
                             .getRow(3)
                             .getCell(1)
-                            .getStringCellValue()).contains("Carla");
+                            .getStringCellValue()).contains("Philip");
                 }
                 System.out.printf("Проверка XLS успешно");
                 System.out.println();
